@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Protocolo Prebuceo — Dr. Juan Guerrero</title>
+<style>
+:root{--bg:#071028;--card:linear-gradient(180deg,#071a2e,#041224);--accent:#2dd4bf;--muted:#94a3b8}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;background:var(--bg);color:#e6eef6}
+.container{max-width:920px;margin:12px auto;padding:14px;border-radius:12px;background:var(--card);box-shadow:0 10px 40px rgba(0,0,0,0.6)}
+.header{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.title{font-size:18px;font-weight:800}
+.subtitle{font-size:12px;color:var(--muted)}
+.controls{display:flex;gap:8px;align-items:center}
+.btn{background:var(--accent);border:none;padding:10px 14px;border-radius:10px;color:#042024;font-weight:700;cursor:pointer}
+.btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);font-weight:600}
+.grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px}
+.panel{background:rgba(255,255,255,0.02);padding:12px;border-radius:10px}
+.bigcircle{width:280px;height:280px;border-radius:50%;margin:8px auto;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 30%, rgba(45,212,191,0.06), rgba(2,6,23,0.35));box-shadow:inset 0 8px 30px rgba(0,0,0,0.6)}
+.inner{width:86%;height:86%;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(2,6,23,0.6);font-size:28px;font-weight:800;text-align:center;padding:8px}
+.phaseLabel{font-size:15px;color:var(--muted);margin-top:6px;text-align:center}
+.timer{font-size:26px;margin-top:6px;font-weight:700}
+.instr{margin-top:10px;color:var(--muted);line-height:1.4;text-align:left}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.input{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+.small{font-size:12px;color:var(--muted)}
+.log{margin-top:10px;background:rgba(255,255,255,0.02);padding:8px;border-radius:8px;max-height:180px;overflow:auto;font-size:13px}
+.footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px;flex-wrap:wrap}
+.link{color:var(--accent);text-decoration:none;font-weight:700}
+.controls-bottom{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:10px;flex-wrap:wrap}
+.skipBtn{background:#ffaa5c;color:#2a1200;padding:8px 12px;border-radius:8px;border:none;font-weight:700;cursor:pointer}
+.smallNote{font-size:12px;color:var(--muted);margin-top:6px;text-align:center}
+@media (max-width:520px){.bigcircle{width:220px;height:220px}.inner{font-size:22px}.timer{font-size:20px}}
+</style>
+</head>
+<body>
+<div class="container" role="application" aria-label="Protocolo prebuceo - app web">
+  <div class="header">
+    <div>
+      <div class="title">Protocolo Prebuceo</div>
+      <div class="subtitle">Desarrollado por Juan Guerrero — @drfish_freedive</div>
+    </div>
+    <div class="controls">
+      <button id="startBtn" class="btn">Iniciar</button>
+      <button id="pauseBtn" class="btn ghost">Pausar</button>
+      <button id="nextBtn" class="skipBtn">Siguiente fase</button>
+      <button id="prevBtn" class="btn ghost">Fase anterior</button>
+      <button id="resetBtn" class="btn ghost">Reiniciar</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel" style="text-align:center">
+      <div class="bigcircle" id="circle"><div class="inner" id="innerText">Listo</div></div>
+      <div class="phaseLabel" id="phaseLabel">Pulsa Iniciar</div>
+      <div class="timer" id="timerLabel">00:00</div>
+      <div class="instr" id="instr">La guía mostrará minuto a minuto qué realizar. Puedes saltar fases con "Siguiente fase".</div>
+
+      <div class="row" style="justify-content:center;margin-top:12px">
+        <div style="min-width:110px">
+          <div class="small">HR (lpm)</div>
+          <input id="hrNow" class="input" type="number" placeholder="—" />
+        </div>
+        <div style="min-width:130px">
+          <div class="small">HRV (RMSSD ms)</div>
+          <input id="hrvNow" class="input" type="number" placeholder="—" />
+        </div>
+        <div style="min-width:110px">
+          <div class="small">Relajación (0–10)</div>
+          <input id="subRelax" class="input" type="number" min="0" max="10" value="5" />
+        </div>
+        <div style="min-width:110px">
+          <div class="small">Claridad (0–10)</div>
+          <input id="subClear" class="input" type="number" min="0" max="10" value="5" />
+        </div>
+        <div>
+          <button id="markBtn" class="btn ghost">Marcar</button>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:12px;text-align:left">
+        <div class="small" style="font-weight:700">Fases (configurable)</div>
+        <div class="small">Fase 1: Movilidad, estiramientos e hipopresivos — 10 min</div>
+        <div class="small">Fase 2: Centrado y coherencia — 5 min (4–5s in / 5–6s out)</div>
+        <div class="small">Fase 3: Hipocapnia/Alcalosis — 4 min (3–4s in / 6–8s out)</div>
+        <div class="small">Fase 4: Relajación consciente — 2 min</div>
+      </div>
+
+      <div class="log" id="log"></div>
+
+      <div class="controls-bottom">
+        <button id="exportBtn" class="btn ghost">Exportar CSV</button>
+        <a id="downloadLink" class="link" download="prebuceo.html">Descargar HTML</a>
+      </div>
+
+      <div class="smallNote">Puedes pausar en cualquier momento. Los sonidos son campanas suaves. No incluye lectura de voz.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Protocolo con minutos y pasos por minuto. No voice. Bells + vibration. Skip phase.
+let audioCtx=null;
+function ensureAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }
+function bell(freq=620,dur=200,vol=0.06){ try{ ensureAudio(); const now=audioCtx.currentTime; const o=audioCtx.createOscillator(); const o2=audioCtx.createOscillator(); const g=audioCtx.createGain(); o.type='sine'; o2.type='sine'; o.frequency.value=freq; o2.frequency.value=freq*1.8; g.gain.value=vol; const filter=audioCtx.createBiquadFilter(); filter.type='highpass'; filter.frequency.value=220; o.connect(g); o2.connect(g); g.connect(filter); filter.connect(audioCtx.destination); o.start(now); o2.start(now); g.gain.setValueAtTime(vol, now); g.gain.exponentialRampToValueAtTime(0.0001, now + dur/1000); setTimeout(()=>{o.stop();o2.stop()}, dur+30);}catch(e){} }
+function vibr(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){} }
+
+// Phase definitions with minute-by-minute instructions
+const phases = [
+  { id:1, name:"Fase 1 — Movilidad y hipopresivos", minutes:10, steps: [
+      "0:00–1:00 — Movilidad costal: inhalar por nariz 4s, exhalar 6s. 10 repeticiones suaves.",
+      "1:00–2:00 — Rotaciones torácicas: 8–10 repeticiones por lado, sin apnea.",
+      "2:00–3:00 — Estiramientos intercostales laterales: mantener 15–20s por lado.",
+      "3:00–4:00 — Apertura escapular y subclavio: 2 repeticiones de 20s.",
+      "4:00–5:00 — Lung packing suave: 2–3 insuflaciones fraccionadas, sin presión.",
+      "5:00–6:00 — Hipopresivo (ronda 1): 2 respiraciones amplias, exhalar y apnea espiratoria 10–15s.",
+      "6:00–7:00 — Recuperación activa: respiración nasal lenta 5–6s.",
+      "7:00–8:00 — Hipopresivo (ronda 2): repetir 10–15s apnea espiratoria.",
+      "8:00–9:00 — Movilidad y expansión costal suave.",
+      "9:00–10:00 — Hipopresivo (ronda 3): última ronda 10–15s, suelta y respiración relajada."
+    ]},
+  { id:2, name:"Fase 2 — Centrado y coherencia", minutes:5, steps: [
+      "0:00–1:00 — Ajusta postura: sentado, espalda recta, hombros relajados.",
+      "1:00–2:00 — Respiración 4–5s IN / 5–6s OUT, nasal. Foco en centro torácico.",
+      "2:00–3:00 — Mantén ritmo, observa HR/HRV si lo mides.",
+      "3:00–4:00 — Continúa coherencia; relaja mandíbula y cuello.",
+      "4:00–5:00 — Preparación mental: visualiza la inmersión, mantén calma."
+    ]},
+  { id:3, name:"Fase 3 — Hipocapnia / Alcalosis", minutes:4, steps: [
+      "0:00–1:00 — Respiración controlada: IN 3–4s / OUT 6–8s, volumen moderado.",
+      "1:00–2:00 — Mantén ritmo; busca sensación de ligereza sin mareo.",
+      "2:00–3:00 — Si sientes hormigueo, reduce volumen; mantén calma facial.",
+      "3:00–4:00 — Último minuto: normaliza ligeramente para transición."
+    ]},
+  { id:4, name:"Fase 4 — Relajación consciente", minutes:2, steps: [
+      "0:00–1:00 — Deja que la respiración fluya sin control, observa sensaciones.",
+      "1:00–2:00 — Cierra la sesión con atención corporal y preparación para calentamientos."
+    ]}
+];
+
+// State
+let state = { phaseIndex:0, minuteIndex:0, second:0, running:false, paused:false, intervalId:null, log:[] };
+
+// DOM
+const startBtn = document.getElementById('startBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const nextBtn = document.getElementById('nextBtn');
+const prevBtn = document.getElementById('prevBtn');
+const resetBtn = document.getElementById('resetBtn');
+const innerText = document.getElementById('innerText');
+const phaseLabel = document.getElementById('phaseLabel');
+const timerLabel = document.getElementById('timerLabel');
+const instr = document.getElementById('instr');
+const markBtn = document.getElementById('markBtn');
+const logEl = document.getElementById('log');
+const exportBtn = document.getElementById('exportBtn');
+const downloadLink = document.getElementById('downloadLink');
+
+function renderInstruction(){
+  const ph = phases[state.phaseIndex];
+  const totalSeconds = ph.minutes * 60;
+  const elapsed = state.minuteIndex*60 + state.second;
+  const remaining = totalSeconds - elapsed;
+  const mm = Math.floor(remaining/60), ss = remaining%60;
+  timerLabel.textContent = `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+  phaseLabel.textContent = ph.name;
+  // find current minute step string
+  const stepText = ph.steps[Math.min(state.minuteIndex, ph.steps.length-1)];
+  instr.textContent = stepText;
+  // inner circle text: show minute progress
+  innerText.innerHTML = `${ph.name}<div style="font-size:14px;margin-top:6px">Min ${state.minuteIndex+1} / ${ph.minutes}</div>`;
+}
+
+function pushLog(txt){ const ts = new Date().toLocaleString(); const hr=document.getElementById('hrNow').value||''; const hrv=document.getElementById('hrvNow').value||''; const rel=document.getElementById('subRelax').value||''; const cle=document.getElementById('subClear').value||''; state.log.unshift({ts,txt,hr,hrv,rel,cle}); renderLog(); }
+function renderLog(){ logEl.innerHTML = state.log.map(r=>`<div style="font-size:12px;color:#94a3b8;margin-bottom:6px">${r.ts} — ${r.txt} — HR:${r.hr} HRV:${r.hrv} Rel:${r.rel} Clar:${r.cle}</div>`).join(''); }
+
+function start(){
+  if(state.running) return;
+  state.running=true; state.paused=false;
+  // start at current indices
+  bell(880,120); vibr(80);
+  pushLog('Inicio protocolo');
+  renderInstruction();
+  state.intervalId = setInterval(tick,1000);
+}
+
+function pause(){
+  if(!state.running) return;
+  state.paused = !state.paused;
+  if(state.paused){ clearInterval(state.intervalId); state.intervalId=null; pauseBtn.textContent='Reanudar'; pushLog('Pausado'); }
+  else { pauseBtn.textContent='Pausar'; state.intervalId = setInterval(tick,1000); pushLog('Reanudado'); }
+}
+
+function reset(){
+  clearInterval(state.intervalId); state.intervalId=null;
+  state.phaseIndex=0; state.minuteIndex=0; state.second=0; state.running=false; state.paused=false;
+  innerText.textContent='Listo'; phaseLabel.textContent='Pulsa Iniciar'; timerLabel.textContent='00:00'; instr.textContent='La guía mostrará minuto a minuto qué realizar.';
+  state.log=[]; renderLog(); pauseBtn.textContent='Pausar'; pushLog('Reiniciado');
+}
+
+function nextPhase(){ // skip to next phase
+  clearInterval(state.intervalId);
+  state.phaseIndex = Math.min(state.phaseIndex+1, phases.length-1);
+  state.minuteIndex = 0; state.second = 0;
+  if(state.running && !state.paused){ state.intervalId = setInterval(tick,1000); }
+  bell(760,120); vibr(80); pushLog(`Saltó a: ${phases[state.phaseIndex].name}`);
+  renderInstruction();
+}
+function prevPhase(){
+  clearInterval(state.intervalId);
+  state.phaseIndex = Math.max(state.phaseIndex-1, 0);
+  state.minuteIndex = 0; state.second = 0;
+  if(state.running && !state.paused){ state.intervalId = setInterval(tick,1000); }
+  bell(520,120); vibr(60); pushLog(`Volvió a: ${phases[state.phaseIndex].name}`);
+  renderInstruction();
+}
+
+function tick(){
+  if(state.paused) return;
+  state.second++;
+  if(state.second >= 60){ state.second = 0; state.minuteIndex++; bell(720,100); vibr(30); pushLog(`Minuto ${state.minuteIndex} de ${phases[state.phaseIndex].name}`); }
+  // if minutes exceed phase length, move to next phase
+  if(state.minuteIndex >= phases[state.phaseIndex].minutes){
+    // advance phase
+    if(state.phaseIndex < phases.length-1){
+      state.phaseIndex++;
+      state.minuteIndex = 0; state.second = 0;
+      bell(880,140); vibr(120); pushLog(`Comienza: ${phases[state.phaseIndex].name}`);
+    } else {
+      // finished all phases
+      clearInterval(state.intervalId); state.running=false;
+      bell(520,180); vibr(200); pushLog('Protocolo completado');
+    }
+  }
+  renderInstruction();
+}
+
+// mark button logs current HR/HRV etc.
+markBtn.addEventListener('click', ()=>{ const txt = `Registro — ${phases[state.phaseIndex].name} Min ${state.minuteIndex+1}`; pushLog(txt); });
+
+startBtn.addEventListener('click', ()=>{ start(); try{ ensureAudio(); }catch(e){} });
+pauseBtn.addEventListener('click', pause);
+nextBtn.addEventListener('click', nextPhase);
+prevBtn.addEventListener('click', prevPhase);
+resetBtn.addEventListener('click', reset);
+
+// CSV export
+exportBtn.addEventListener('click', ()=>{
+  const rows = [['timestamp','evento','hr','hrv','rel','claridad']];
+  state.log.slice().reverse().forEach(r => rows.push([`"${r.ts}"`, `"${(r.txt||'').replace(/"/g,'""')}"`, r.hr, r.hrv, r.rel, r.cle]));
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'prebuceo_log.csv'; a.click(); URL.revokeObjectURL(url);
+});
+
+// download link content
+downloadLink.addEventListener('click', (e)=>{
+  const blob = new Blob([document.documentElement.outerHTML], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  downloadLink.href = url;
+});
+
+// Initialize UI
+reset();
+</script>
+
+</body>
+</html>
