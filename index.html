@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Protocolo Prebuceo</title>
+<link rel="manifest" href="manifest.json">
+<style>
+  body {
+    background-color: #0a1a2f;
+    color: #e6e6e6;
+    font-family: 'Helvetica Neue', sans-serif;
+    text-align: center;
+    padding: 2em;
+  }
+  h1 { color: #8dc0ff; }
+  button {
+    background: #224466;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 1em 2em;
+    margin: 1em;
+    font-size: 1.1em;
+  }
+  footer {
+    margin-top: 3em;
+    font-size: 0.9em;
+    color: #6a8ebf;
+  }
+</style>
+</head>
+<body>
+<h1>Protocolo Prebuceo</h1>
+<p>Sesión guiada de preparación fisiológica y mental</p>
+<div id="app">
+  <button onclick="startProtocol()">Iniciar</button>
+  <button onclick="pauseProtocol()">Pausar</button>
+  <button onclick="resetProtocol()">Reiniciar</button>
+  <div id="phase" style="margin-top:2em;font-size:1.4em;"></div>
+</div>
+<footer>Desarrollado por Juan Guerrero @drfish_freedive</footer>
+<script>
+let phases = [
+  {name:'Fase 1: Movilidad y estiramientos torácicos (10 min)', duration:600},
+  {name:'Fase 2: Respiración de coherencia y centrado (5 min)', duration:300},
+  {name:'Fase 3: Hipocapnia controlada y alcalosis (4 min)', duration:240},
+  {name:'Fase 4: Relajación consciente (2 min)', duration:120}
+];
+let currentPhase = 0;
+let timer, remaining;
+
+function startProtocol(){
+  if (!timer) runPhase();
+}
+function runPhase(){
+  if (currentPhase >= phases.length){ 
+    document.getElementById('phase').innerHTML = '✅ Protocolo completado';
+    beep();
+    return;
+  }
+  let phase = phases[currentPhase];
+  remaining = phase.duration;
+  document.getElementById('phase').innerHTML = phase.name;
+  beep();
+  timer = setInterval(()=>{
+    remaining--;
+    if(remaining<=0){
+      clearInterval(timer);
+      timer=null;
+      currentPhase++;
+      runPhase();
+    }
+  },1000);
+}
+function pauseProtocol(){
+  if(timer){ clearInterval(timer); timer=null; }
+}
+function resetProtocol(){
+  clearInterval(timer);
+  timer=null;
+  currentPhase=0;
+  document.getElementById('phase').innerHTML='';
+}
+function beep(){
+  const ctx = new (window.AudioContext||window.webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.value = 520;
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start();
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1);
+  osc.stop(ctx.currentTime + 1);
+}
+</script>
+</body>
+</html>
